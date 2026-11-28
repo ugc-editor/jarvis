@@ -1,0 +1,40 @@
+# Jarvis page, cloud half. Lives in the public page repo ugc-editor/jarvis (copied there by the PC from
+# ugc-editor/cloud/jarvis_site_workflow.yml). Public repo = free, unlimited minutes. It refreshes the locked page
+# while the PC is off; when the PC is on it stops at once. Only scrambled data is ever written; the log stays quiet.
+name: Jarvis page
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jarvis
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -q cryptography==44.0.0
+      - name: Refresh the page
+        env:
+          JARVIS_KEY: ${{ secrets.JARVIS_KEY }}
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python jarvis_cloud.py
